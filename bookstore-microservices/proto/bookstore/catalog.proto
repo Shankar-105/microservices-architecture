@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+package bookstore.catalog.v1;
+
+option go_package = "bookstore-microservices/proto/bookstore;bookstorepb";
+
+service CatalogService {
+  rpc Health(HealthRequest) returns (HealthResponse);
+  rpc GetBook(GetBookRequest) returns (GetBookResponse);
+}
+
+message HealthRequest {}
+
+message HealthResponse {
+  string status = 1;
+}
+
+message GetBookRequest {
+  string book_id = 1;
+}
+
+message GetBookResponse {
+  string book_id = 1;
+  string title = 2;
+  int64 price_cents = 3;
+  bool available = 4;
+}

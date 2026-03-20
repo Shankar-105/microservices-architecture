@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: user-service-go
+  namespace: bookstore
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: user-service-go
+  template:
+    metadata:
+      labels:
+        app: user-service-go
+    spec:
+      containers:
+        - name: user-service-go
+          image: user-service-go:latest
+          ports:
+            - containerPort: 50051

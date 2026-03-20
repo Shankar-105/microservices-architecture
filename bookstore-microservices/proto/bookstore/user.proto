@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+package bookstore.user.v1;
+
+option go_package = "bookstore-microservices/proto/bookstore;bookstorepb";
+
+service UserService {
+  rpc Health(HealthRequest) returns (HealthResponse);
+  rpc GetUser(GetUserRequest) returns (GetUserResponse);
+}
+
+message HealthRequest {}
+
+message HealthResponse {
+  string status = 1;
+}
+
+message GetUserRequest {
+  string user_id = 1;
+}
+
+message GetUserResponse {
+  string user_id = 1;
+  string email = 2;
+  string display_name = 3;
+}

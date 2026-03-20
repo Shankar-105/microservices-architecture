@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+package bookstore.order.v1;
+
+option go_package = "bookstore-microservices/proto/bookstore;bookstorepb";
+
+service OrderService {
+  rpc Health(HealthRequest) returns (HealthResponse);
+  rpc CreateOrder(CreateOrderRequest) returns (CreateOrderResponse);
+}
+
+message HealthRequest {}
+
+message HealthResponse {
+  string status = 1;
+}
+
+message CreateOrderRequest {
+  string user_id = 1;
+  string book_id = 2;
+  int32 quantity = 3;
+}
+
+message CreateOrderResponse {
+  string order_id = 1;
+  string status = 2;
+  int64 total_cents = 3;
+}

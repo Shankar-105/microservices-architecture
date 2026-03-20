@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+package bookstore.payment.v1;
+
+option go_package = "bookstore-microservices/proto/bookstore;bookstorepb";
+
+service PaymentService {
+  rpc Health(HealthRequest) returns (HealthResponse);
+  rpc Authorize(AuthorizePaymentRequest) returns (AuthorizePaymentResponse);
+}
+
+message HealthRequest {}
+
+message HealthResponse {
+  string status = 1;
+}
+
+message AuthorizePaymentRequest {
+  string order_id = 1;
+  int64 amount_cents = 2;
+}
+
+message AuthorizePaymentResponse {
+  bool approved = 1;
+  string transaction_id = 2;
+  string reason = 3;
+}

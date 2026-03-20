@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: catalog-service-py
+  namespace: bookstore
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: catalog-service-py
+  template:
+    metadata:
+      labels:
+        app: catalog-service-py
+    spec:
+      containers:
+        - name: catalog-service-py
+          image: catalog-service-py:latest
+          ports:
+            - containerPort: 50053
+            - containerPort: 8001
