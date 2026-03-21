@@ -1,18 +1,42 @@
-# Bookstore Microservices (Polyglot)
+# Bookstore Microservices Learning Repo
 
-This repository contains a polyglot microservices system for a bookstore.
-## Services
-- `gateway-go` (Go): HTTP entrypoint
-- `user-service-go` (Go): gRPC user service skeleton
-- `order-service-go` (Go): gRPC order orchestration skeleton
-- `catalog-service-py` (Python): gRPC + HTTP health skeleton
+## Important Note
+This repository is **not a production-ready microservices system**.
+It is a practical learning example to understand how microservices work, how services communicate, and how to design boundaries with different languages.
 
-## Quick start
-1. Generate protobuf stubs (requires `protoc`):
-   - `make proto`
-2. Run all services locally (no containers):
-   - `make run-all`
-3. Stop all at once:
-   - `make stop-all` 
-## Notes
-Every thing to be updated soon!
+## What This Repo Demonstrates
+This project shows a **polyglot microservices approach**:
+1. A **Go gateway service** for HTTP entry and request routing.
+2. A **Go order service** for order orchestration and persistence.
+3. A **Python catalog service** for catalog/business logic.
+4. **gRPC + Protocol Buffers** for internal service-to-service communication.
+
+## Why Polyglot Here
+I intentionally used both Go and Python to show when teams may pick different languages per service responsibility.
+1. Go is a strong fit for gateway-style high-concurrency request handling.
+2. Python is a strong fit for data/ML-friendly domains where recommendation logic can evolve faster.
+3. In real systems, language choice should follow team strengths, runtime requirements, and long-term maintainability.
+
+## Why gRPC Here
+gRPC is used for internal service communication because it provides:
+1. Strong contracts via `.proto` files.
+2. Type-safe generated clients/servers in multiple languages.
+3. Efficient binary transport for service-to-service calls.
+
+## Read This Next
+If you want the complete explanation written in a beginner-friendly, first-person style:
+1. [docs/explaining-repo.md](docs/explaining-repo.md)
+
+If you want to understand actual runtime flow of this repo:
+1. [docs/repo-working.md](docs/repo-working.md)
+
+If you want setup using Makefile:
+1. [docs/setup-with-make.md](docs/setup-with-make.md)
+
+If you want setup using Docker:
+1. [docs/setup-with-docker.md](docs/setup-with-docker.md)
+
+## Current API Surface (Simplified)
+1. `GET /healthz`
+2. `POST /createorder`
+3. `GET /getorders?user_id=...`

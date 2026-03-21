@@ -6,3 +6,6 @@ generated-go/
 generated-py/
 .venv
 pyrightconfig.json
+*.txt
+*.db
+**/go.sum
