@@ -1,0 +1,98 @@
+PROTO_DIR := proto/bookstore
+GO_OUT := generated-go
+PY_OUT := generated-py
+VENV_DIR ?= .venv
+PYTHON ?= py
+PROTO_PYTHON := $(VENV_DIR)/Scripts/python.exe
+SERVICE_PYTHON := ..\\$(VENV_DIR)\\Scripts\\python.exe
+GOPATH_BIN := $(shell go env GOPATH)/bin
+PROTOC_GEN_GO := $(GOPATH_BIN)/protoc-gen-go.exe
+PROTOC_GEN_GO_GRPC := $(GOPATH_BIN)/protoc-gen-go-grpc.exe
+
+PROTO_FILES := \
+	$(PROTO_DIR)/common.proto \
+	$(PROTO_DIR)/user.proto \
+	$(PROTO_DIR)/catalog.proto \
+	$(PROTO_DIR)/order.proto \
+	$(PROTO_DIR)/payment.proto
+
+.PHONY: help init-py install-py-deps check-protoc install-go-plugins check-go-plugins proto-dirs proto-go proto-py proto run-gateway run-user run-order run-catalog run-payment run-all stop-all status-ports
+
+help:
+	@echo "Targets:" \
+	&& echo "  init-py          Create Python venv ($(VENV_DIR))" \
+	&& echo "  install-py-deps  Install catalog/payment Python requirements" \
+	&& echo "  install-go-plugins Install protoc Go plugins" \
+	&& echo "  proto            Generate Go + Python protobuf stubs" \
+	&& echo "  run-all          Start all services in background" \
+	&& echo "  stop-all         Stop all services by known ports" \
+	&& echo "  status-ports     Show listeners for service ports"
+
+init-py:
+	@if not exist "$(PROTO_PYTHON)" $(PYTHON) -m venv $(VENV_DIR)
+	$(PROTO_PYTHON) -m pip install --upgrade pip setuptools wheel
+
+install-py-deps: init-py
+	$(PROTO_PYTHON) -m pip install -r catalog-service-py/requirements.txt -r payment-service-py/requirements.txt
+
+check-protoc:
+	@where protoc >NUL 2>&1 || (echo [ERROR] protoc not found in PATH. Install with winget install Google.Protobuf & exit /b 1)
+
+install-go-plugins:
+	go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.36.5
+	go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.5.1
+
+check-go-plugins:
+	@if not exist "$(PROTOC_GEN_GO)" (echo [ERROR] Missing $(PROTOC_GEN_GO). Run: make install-go-plugins & exit /b 1)
+	@if not exist "$(PROTOC_GEN_GO_GRPC)" (echo [ERROR] Missing $(PROTOC_GEN_GO_GRPC). Run: make install-go-plugins & exit /b 1)
+
+proto-dirs:
+	@if not exist "$(GO_OUT)\\bookstore" mkdir "$(GO_OUT)\\bookstore"
+	@if not exist "$(PY_OUT)\\bookstore" mkdir "$(PY_OUT)\\bookstore"
+
+proto-go: check-protoc check-go-plugins proto-dirs
+	protoc -I proto \
+		--plugin=protoc-gen-go=$(PROTOC_GEN_GO) \
+		--plugin=protoc-gen-go-grpc=$(PROTOC_GEN_GO_GRPC) \
+		--go_out=$(GO_OUT) --go_opt=paths=source_relative \
+		--go-grpc_out=$(GO_OUT) --go-grpc_opt=paths=source_relative \
+		$(PROTO_FILES)
+
+proto-py: install-py-deps proto-dirs
+	$(PROTO_PYTHON) -m grpc_tools.protoc -I proto \
+		--python_out=$(PY_OUT) --grpc_python_out=$(PY_OUT) \
+		$(PROTO_FILES)
+
+proto: proto-go proto-py
+
+run-gateway:
+	cd gateway-go && go run ./cmd/gateway
+
+run-user:
+	cd user-service-go && go run ./cmd/user
+
+run-order:
+	cd order-service-go && go run ./cmd/order
+
+run-catalog:
+	cd catalog-service-py && $(SERVICE_PYTHON) -m app.main
+
+run-payment:
+	cd payment-service-py && $(SERVICE_PYTHON) -m app.main
+
+run-all:
+	cmd /c start "" /B make run-gateway
+	cmd /c start "" /B make run-user
+	cmd /c start "" /B make run-order
+	cmd /c start "" /B make run-catalog
+	cmd /c start "" /B make run-payment
+
+stop-all:
+	for /f "tokens=5" %%a in ('netstat -ano ^| findstr LISTENING ^| findstr ":8080 :50051 :50052 :8001 :8002"') do @taskkill /PID %%a /F >NUL 2>&1 || ver >NUL
+
+status-ports:
+	netstat -ano | findstr :8080
+	netstat -ano | findstr :50051
+	netstat -ano | findstr :50052
+	netstat -ano | findstr :8001
+	netstat -ano | findstr :8002

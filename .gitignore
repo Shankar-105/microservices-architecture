@@ -1,4 +1,7 @@
 microservices-mastery/
-bookstore-microservices/plan.md
-bookstore-microservices/docs/
-bookstore-microservices/scripts
+plan.md
+docs/
+scripts
+generated-go/
+generated-py/
+.venv
