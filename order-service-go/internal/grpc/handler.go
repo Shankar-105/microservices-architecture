@@ -37,7 +37,7 @@ func (h *Handler) CreateOrder(ctx context.Context, req *bookstorepb.CreateOrderR
 		switch err {
 		case service.ErrUserNotFound, service.ErrBookNotFound:
 			return nil, status.Error(codes.NotFound, err.Error())
-		case service.ErrBookUnavailable, service.ErrPaymentDeclined:
+		case service.ErrBookUnavailable:
 			return nil, status.Error(codes.FailedPrecondition, err.Error())
 		case service.ErrDependencyFailure:
 			return nil, status.Error(codes.Unavailable, err.Error())

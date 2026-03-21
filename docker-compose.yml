@@ -21,9 +21,3 @@ services:
     ports:
       - "50053:50053"
       - "8001:8001"
-
-  payment-service-py:
-    build: ./payment-service-py
-    ports:
-      - "50054:50054"
-      - "8002:8002"

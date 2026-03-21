@@ -26,7 +26,6 @@ func main() {
 	dbPath := getenv("ORDER_DB_PATH", "order-service.db")
 	userServiceAddr := getenv("USER_SERVICE_ADDR", "localhost:50051")
 	catalogServiceAddr := getenv("CATALOG_SERVICE_ADDR", "localhost:50053")
-	paymentServiceAddr := getenv("PAYMENT_SERVICE_ADDR", "localhost:50054")
 
 	db, err := sql.Open("sqlite", dbPath)
 	if err != nil {
@@ -63,17 +62,7 @@ func main() {
 		}
 	}()
 
-	paymentClient, err := clients.NewPaymentClient(ctx, paymentServiceAddr)
-	if err != nil {
-		log.Fatalf("payment client init failed: %v", err)
-	}
-	defer func() {
-		if closeErr := paymentClient.Close(); closeErr != nil {
-			log.Printf("payment client close error: %v", closeErr)
-		}
-	}()
-
-	orderService := service.NewOrderService(repo, userClient, catalogClient, paymentClient)
+	orderService := service.NewOrderService(repo, userClient, catalogClient)
 	handler := grpcadapter.NewHandler(orderService)
 
 	listener, err := net.Listen("tcp", ":"+port)

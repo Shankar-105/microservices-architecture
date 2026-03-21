@@ -13,15 +13,14 @@ PROTO_FILES := \
 	$(PROTO_DIR)/common.proto \
 	$(PROTO_DIR)/user.proto \
 	$(PROTO_DIR)/catalog.proto \
-	$(PROTO_DIR)/order.proto \
-	$(PROTO_DIR)/payment.proto
+	$(PROTO_DIR)/order.proto
 
-.PHONY: help init-py install-py-deps check-protoc install-go-plugins check-go-plugins proto-dirs proto-go proto-py proto run-gateway run-user run-order run-catalog run-payment run-all stop-all status-ports
+.PHONY: help init-py install-py-deps check-protoc install-go-plugins check-go-plugins proto-dirs proto-go proto-py proto run-gateway run-user run-order run-catalog run-all stop-all status-ports
 
 help:
 	@echo "Targets:" \
 	&& echo "  init-py          Create Python venv ($(VENV_DIR))" \
-	&& echo "  install-py-deps  Install catalog/payment Python requirements" \
+	&& echo "  install-py-deps  Install catalog Python requirements" \
 	&& echo "  install-go-plugins Install protoc Go plugins" \
 	&& echo "  proto            Generate Go + Python protobuf stubs" \
 	&& echo "  run-all          Start all services in background" \
@@ -33,7 +32,7 @@ init-py:
 	$(PROTO_PYTHON) -m pip install --upgrade pip setuptools wheel
 
 install-py-deps: init-py
-	$(PROTO_PYTHON) -m pip install -r catalog-service-py/requirements.txt -r payment-service-py/requirements.txt
+	$(PROTO_PYTHON) -m pip install -r catalog-service-py/requirements.txt
 
 check-protoc:
 	@where protoc >NUL 2>&1 || (echo [ERROR] protoc not found in PATH. Install with winget install Google.Protobuf & exit /b 1)
@@ -77,24 +76,18 @@ run-order:
 run-catalog:
 	cd catalog-service-py && $(SERVICE_PYTHON) -m app.main
 
-run-payment:
-	cd payment-service-py && $(SERVICE_PYTHON) -m app.main
-
 run-all:
 	cmd /c start "" /B make run-gateway
 	cmd /c start "" /B make run-user
 	cmd /c start "" /B make run-order
 	cmd /c start "" /B make run-catalog
-	cmd /c start "" /B make run-payment
 
 stop-all:
-	for /f "tokens=5" %%a in ('netstat -ano ^| findstr LISTENING ^| findstr ":8080 :50051 :50052 :8001 :8002"') do @taskkill /PID %%a /F >NUL 2>&1 || ver >NUL
+	for /f "tokens=5" %%a in ('netstat -ano ^| findstr LISTENING ^| findstr ":8080 :50051 :50052 :8001"') do @taskkill /PID %%a /F >NUL 2>&1 || ver >NUL
 
 status-ports:
 	netstat -ano | findstr :8080
 	netstat -ano | findstr :50051
 	netstat -ano | findstr :50052
 	netstat -ano | findstr :50053
-	netstat -ano | findstr :50054
 	netstat -ano | findstr :8001
-	netstat -ano | findstr :8002

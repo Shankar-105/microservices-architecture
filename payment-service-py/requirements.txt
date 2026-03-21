@@ -1,8 +1,0 @@
-grpcio==1.78.1
-grpcio-reflection==1.78.1
-grpcio-tools==1.78.1
-fastapi==0.116.1
-uvicorn==0.35.0
-protobuf==6.33.5
-setuptools==82.0.0
-typing_extensions==4.15.0

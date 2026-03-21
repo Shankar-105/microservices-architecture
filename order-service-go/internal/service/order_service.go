@@ -17,7 +17,6 @@ var (
 	ErrUserNotFound      = errors.New("user not found")
 	ErrBookNotFound      = errors.New("book not found")
 	ErrBookUnavailable   = errors.New("book unavailable")
-	ErrPaymentDeclined   = errors.New("payment declined")
 	ErrDependencyFailure = errors.New("dependency failure")
 )
 
@@ -25,20 +24,17 @@ type OrderService struct {
 	repo          *repository.PostgresOrderRepo
 	userClient    *clients.UserClient
 	catalogClient *clients.CatalogClient
-	paymentClient *clients.PaymentClient
 }
 
 func NewOrderService(
 	repo *repository.PostgresOrderRepo,
 	userClient *clients.UserClient,
 	catalogClient *clients.CatalogClient,
-	paymentClient *clients.PaymentClient,
 ) *OrderService {
 	return &OrderService{
 		repo:          repo,
 		userClient:    userClient,
 		catalogClient: catalogClient,
-		paymentClient: paymentClient,
 	}
 }
 
@@ -77,27 +73,10 @@ func (s *OrderService) CreateOrder(ctx context.Context, userID, bookID string, q
 		return nil, err
 	}
 
-	paymentResp, err := s.paymentClient.Authorize(ctx, order.OrderID, totalCents)
-	if err != nil {
-		if updateErr := s.repo.UpdateResult(ctx, order.OrderID, totalCents, "failed"); updateErr != nil {
-			return nil, updateErr
-		}
-		order.Status = "failed"
-		return nil, ErrDependencyFailure
-	}
-
-	if !paymentResp.GetApproved() {
-		if err := s.repo.UpdateResult(ctx, order.OrderID, totalCents, "failed"); err != nil {
-			return nil, err
-		}
-		order.Status = "failed"
-		return order, ErrPaymentDeclined
-	}
-
-	if err := s.repo.UpdateResult(ctx, order.OrderID, totalCents, "paid"); err != nil {
+	if err := s.repo.UpdateResult(ctx, order.OrderID, totalCents, "confirmed"); err != nil {
 		return nil, err
 	}
-	order.Status = "paid"
+	order.Status = "confirmed"
 
 	return order, nil
 }
