@@ -2,6 +2,7 @@ import asyncio
 import logging
 import sys
 from pathlib import Path
+from typing import Any, cast
 
 import grpc
 
@@ -14,6 +15,9 @@ if str(GENERATED_PY) not in sys.path:
 
 from bookstore import catalog_pb2, catalog_pb2_grpc, common_pb2
 
+catalog_pb2_any = cast(Any, catalog_pb2)
+common_pb2_any = cast(Any, common_pb2)
+
 logger = logging.getLogger(__name__)
 
 
@@ -22,21 +26,21 @@ class CatalogGrpcServicer(catalog_pb2_grpc.CatalogServiceServicer):
         self._service = service
 
     async def Health(self, request, context):
-        return common_pb2.HealthCheckResponse(status=self._service.health(), service="catalog-service-py")
+        return common_pb2_any.HealthCheckResponse(status=self._service.health(), service="catalog-service-py")
 
     async def GetBook(self, request, context):
         if not request.book_id:
             context.set_code(grpc.StatusCode.INVALID_ARGUMENT)
             context.set_details("book_id is required")
-            return catalog_pb2.GetBookResponse()
+            return catalog_pb2_any.GetBookResponse()
 
         book = self._service.get_book(request.book_id)
         if book is None:
             context.set_code(grpc.StatusCode.NOT_FOUND)
             context.set_details("book not found")
-            return catalog_pb2.GetBookResponse()
+            return catalog_pb2_any.GetBookResponse()
 
-        return catalog_pb2.GetBookResponse(
+        return catalog_pb2_any.GetBookResponse(
             book_id=book.book_id,
             title=book.title,
             price_cents=book.price_cents,

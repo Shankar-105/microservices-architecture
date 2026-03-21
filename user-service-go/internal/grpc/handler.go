@@ -3,8 +3,9 @@ package grpc
 import (
 	"context"
 
-	bookstorepb "github.com/shank/bookstore-microservices/generated-go/bookstore"
-	"github.com/shank/bookstore-microservices/user-service-go/internal/service"
+	bookstorepb "microservices/generated-go/bookstore"
+	"microservices/user-service-go/internal/service"
+
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )

@@ -3,8 +3,9 @@ package grpc
 import (
 	"context"
 
-	bookstorepb "github.com/shank/bookstore-microservices/generated-go/bookstore"
-	"github.com/shank/bookstore-microservices/order-service-go/internal/service"
+	bookstorepb "microservices/generated-go/bookstore"
+	"microservices/order-service-go/internal/service"
+
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -33,6 +34,14 @@ func (h *Handler) CreateOrder(ctx context.Context, req *bookstorepb.CreateOrderR
 
 	order, err := h.service.CreateOrder(ctx, req.GetUserId(), req.GetBookId(), req.GetQuantity())
 	if err != nil {
+		switch err {
+		case service.ErrUserNotFound, service.ErrBookNotFound:
+			return nil, status.Error(codes.NotFound, err.Error())
+		case service.ErrBookUnavailable, service.ErrPaymentDeclined:
+			return nil, status.Error(codes.FailedPrecondition, err.Error())
+		case service.ErrDependencyFailure:
+			return nil, status.Error(codes.Unavailable, err.Error())
+		}
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 

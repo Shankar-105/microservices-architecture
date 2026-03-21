@@ -10,10 +10,11 @@ import (
 	"syscall"
 	"time"
 
-	bookstorepb "github.com/shank/bookstore-microservices/generated-go/bookstore"
-	grpcadapter "github.com/shank/bookstore-microservices/user-service-go/internal/grpc"
-	"github.com/shank/bookstore-microservices/user-service-go/internal/repository"
-	"github.com/shank/bookstore-microservices/user-service-go/internal/service"
+	bookstorepb "microservices/generated-go/bookstore"
+	grpcadapter "microservices/user-service-go/internal/grpc"
+	"microservices/user-service-go/internal/repository"
+	"microservices/user-service-go/internal/service"
+
 	"google.golang.org/grpc"
 	_ "modernc.org/sqlite"
 )

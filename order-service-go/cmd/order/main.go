@@ -10,10 +10,12 @@ import (
 	"syscall"
 	"time"
 
-	bookstorepb "github.com/shank/bookstore-microservices/generated-go/bookstore"
-	grpcadapter "github.com/shank/bookstore-microservices/order-service-go/internal/grpc"
-	"github.com/shank/bookstore-microservices/order-service-go/internal/repository"
-	"github.com/shank/bookstore-microservices/order-service-go/internal/service"
+	bookstorepb "microservices/generated-go/bookstore"
+	"microservices/order-service-go/internal/clients"
+	grpcadapter "microservices/order-service-go/internal/grpc"
+	"microservices/order-service-go/internal/repository"
+	"microservices/order-service-go/internal/service"
+
 	"google.golang.org/grpc"
 	_ "modernc.org/sqlite"
 )
@@ -22,6 +24,9 @@ func main() {
 	ctx := context.Background()
 	port := getenv("ORDER_GRPC_PORT", "50052")
 	dbPath := getenv("ORDER_DB_PATH", "order-service.db")
+	userServiceAddr := getenv("USER_SERVICE_ADDR", "localhost:50051")
+	catalogServiceAddr := getenv("CATALOG_SERVICE_ADDR", "localhost:50053")
+	paymentServiceAddr := getenv("PAYMENT_SERVICE_ADDR", "localhost:50054")
 
 	db, err := sql.Open("sqlite", dbPath)
 	if err != nil {
@@ -38,7 +43,37 @@ func main() {
 		log.Fatalf("repo init failed: %v", err)
 	}
 
-	orderService := service.NewOrderService(repo)
+	userClient, err := clients.NewUserClient(ctx, userServiceAddr)
+	if err != nil {
+		log.Fatalf("user client init failed: %v", err)
+	}
+	defer func() {
+		if closeErr := userClient.Close(); closeErr != nil {
+			log.Printf("user client close error: %v", closeErr)
+		}
+	}()
+
+	catalogClient, err := clients.NewCatalogClient(ctx, catalogServiceAddr)
+	if err != nil {
+		log.Fatalf("catalog client init failed: %v", err)
+	}
+	defer func() {
+		if closeErr := catalogClient.Close(); closeErr != nil {
+			log.Printf("catalog client close error: %v", closeErr)
+		}
+	}()
+
+	paymentClient, err := clients.NewPaymentClient(ctx, paymentServiceAddr)
+	if err != nil {
+		log.Fatalf("payment client init failed: %v", err)
+	}
+	defer func() {
+		if closeErr := paymentClient.Close(); closeErr != nil {
+			log.Printf("payment client close error: %v", closeErr)
+		}
+	}()
+
+	orderService := service.NewOrderService(repo, userClient, catalogClient, paymentClient)
 	handler := grpcadapter.NewHandler(orderService)
 
 	listener, err := net.Listen("tcp", ":"+port)

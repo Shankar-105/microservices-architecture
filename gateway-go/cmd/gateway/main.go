@@ -9,15 +9,27 @@ import (
 	"syscall"
 	"time"
 
-	httptransport "github.com/shank/bookstore-microservices/gateway-go/internal/http"
+	"microservices/gateway-go/internal/clients"
+	httptransport "microservices/gateway-go/internal/http"
 )
 
 func main() {
 	port := getenv("GATEWAY_HTTP_PORT", "8080")
+	orderServiceAddr := getenv("ORDER_SERVICE_ADDR", "localhost:50052")
+
+	orderClient, err := clients.NewOrderClient(context.Background(), orderServiceAddr)
+	if err != nil {
+		log.Fatalf("order client init failed: %v", err)
+	}
+	defer func() {
+		if closeErr := orderClient.Close(); closeErr != nil {
+			log.Printf("order client close error: %v", closeErr)
+		}
+	}()
 
 	srv := &http.Server{
 		Addr:              ":" + port,
-		Handler:           httptransport.NewRouter(),
+		Handler:           httptransport.NewRouter(orderClient),
 		ReadHeaderTimeout: 5 * time.Second,
 	}
 

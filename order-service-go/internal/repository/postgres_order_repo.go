@@ -55,3 +55,12 @@ func (r *PostgresOrderRepo) Create(ctx context.Context, order *Order) error {
 	)
 	return err
 }
+
+func (r *PostgresOrderRepo) UpdateResult(ctx context.Context, orderID string, totalCents int64, status string) error {
+	_, err := r.db.ExecContext(ctx, `
+		UPDATE orders
+		SET total_cents = ?, status = ?
+		WHERE order_id = ?
+	`, totalCents, status, orderID)
+	return err
+}

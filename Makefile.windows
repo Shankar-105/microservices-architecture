@@ -94,5 +94,7 @@ status-ports:
 	netstat -ano | findstr :8080
 	netstat -ano | findstr :50051
 	netstat -ano | findstr :50052
+	netstat -ano | findstr :50053
+	netstat -ano | findstr :50054
 	netstat -ano | findstr :8001
 	netstat -ano | findstr :8002

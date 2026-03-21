@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	"github.com/shank/bookstore-microservices/user-service-go/internal/repository"
+	"microservices/user-service-go/internal/repository"
 )
 
 var ErrUserNotFound = errors.New("user not found")

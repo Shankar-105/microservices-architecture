@@ -1,14 +1,14 @@
-module github.com/shank/bookstore-microservices/user-service-go
+module microservices/user-service-go
 
 go 1.24
 
 require (
-	github.com/shank/bookstore-microservices/generated-go v0.0.0
 	google.golang.org/grpc v1.74.2
+	microservices/generated-go v0.0.0
 	modernc.org/sqlite v1.38.2
 )
 
-replace github.com/shank/bookstore-microservices/generated-go => ../generated-go
+replace microservices/generated-go => ../generated-go
 
 require (
 	github.com/dustin/go-humanize v1.0.1 // indirect

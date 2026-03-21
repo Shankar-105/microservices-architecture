@@ -3,13 +3,15 @@ package http
 import (
 	"net/http"
 
-	"github.com/shank/bookstore-microservices/gateway-go/internal/middleware"
+	"microservices/gateway-go/internal/clients"
+	"microservices/gateway-go/internal/middleware"
 )
 
-func NewRouter() http.Handler {
+func NewRouter(orderClient *clients.OrderClient) http.Handler {
+	handler := NewHandler(orderClient)
 	mux := http.NewServeMux()
-	mux.HandleFunc("/healthz", HealthHandler)
-	mux.HandleFunc("/v1/orders", PlaceholderOrderCreateHandler)
+	mux.HandleFunc("/healthz", handler.HealthHandler)
+	mux.HandleFunc("/v1/orders", handler.CreateOrderHandler)
 
 	return middleware.RequestID(mux)
 }

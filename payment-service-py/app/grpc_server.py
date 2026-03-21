@@ -2,6 +2,7 @@ import asyncio
 import logging
 import sys
 from pathlib import Path
+from typing import Any, cast
 
 import grpc
 
@@ -14,6 +15,9 @@ if str(GENERATED_PY) not in sys.path:
 
 from bookstore import common_pb2, payment_pb2, payment_pb2_grpc
 
+common_pb2_any = cast(Any, common_pb2)
+payment_pb2_any = cast(Any, payment_pb2)
+
 logger = logging.getLogger(__name__)
 
 
@@ -22,16 +26,16 @@ class PaymentGrpcServicer(payment_pb2_grpc.PaymentServiceServicer):
         self._service = service
 
     async def Health(self, request, context):
-        return common_pb2.HealthCheckResponse(status=self._service.health(), service="payment-service-py")
+        return common_pb2_any.HealthCheckResponse(status=self._service.health(), service="payment-service-py")
 
     async def Authorize(self, request, context):
         if not request.order_id:
             context.set_code(grpc.StatusCode.INVALID_ARGUMENT)
             context.set_details("order_id is required")
-            return payment_pb2.AuthorizePaymentResponse()
+            return payment_pb2_any.AuthorizePaymentResponse()
 
         decision = self._service.authorize(request.order_id, request.amount_cents)
-        return payment_pb2.AuthorizePaymentResponse(
+        return payment_pb2_any.AuthorizePaymentResponse(
             approved=decision.approved,
             transaction_id=decision.transaction_id,
             reason=decision.reason,

@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package bookstore.order.v1;
 
-option go_package = "bookstore-microservices/proto/bookstore;bookstorepb";
+option go_package = "microservices/generated-go/bookstore;bookstorepb";
 
 import "bookstore/common.proto";
 
