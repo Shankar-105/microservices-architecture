@@ -80,3 +80,7 @@ func (s *OrderService) CreateOrder(ctx context.Context, userID, bookID string, q
 
 	return order, nil
 }
+
+func (s *OrderService) GetOrders(ctx context.Context, userID string) ([]repository.Order, error) {
+	return s.repo.ListByUser(ctx, userID)
+}

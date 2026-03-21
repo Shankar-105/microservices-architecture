@@ -33,3 +33,7 @@ func (c *OrderClient) Close() error {
 func (c *OrderClient) CreateOrder(ctx context.Context, req *bookstorepb.CreateOrderRequest) (*bookstorepb.CreateOrderResponse, error) {
 	return c.client.CreateOrder(ctx, req)
 }
+
+func (c *OrderClient) GetOrders(ctx context.Context, req *bookstorepb.GetOrdersRequest) (*bookstorepb.GetOrdersResponse, error) {
+	return c.client.GetOrders(ctx, req)
+}

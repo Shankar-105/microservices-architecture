@@ -9,6 +9,7 @@ import "bookstore/common.proto";
 service OrderService {
   rpc Health(bookstore.common.v1.HealthCheckRequest) returns (bookstore.common.v1.HealthCheckResponse);
   rpc CreateOrder(CreateOrderRequest) returns (CreateOrderResponse);
+  rpc GetOrders(GetOrdersRequest) returns (GetOrdersResponse);
 }
 
 message CreateOrderRequest {
@@ -21,4 +22,22 @@ message CreateOrderResponse {
   string order_id = 1;
   string status = 2;
   int64 total_cents = 3;
+}
+
+message GetOrdersRequest {
+  string user_id = 1;
+}
+
+message Order {
+  string order_id = 1;
+  string user_id = 2;
+  string book_id = 3;
+  int32 quantity = 4;
+  int64 total_cents = 5;
+  string status = 6;
+  string created_at = 7;
+}
+
+message GetOrdersResponse {
+  repeated Order orders = 1;
 }

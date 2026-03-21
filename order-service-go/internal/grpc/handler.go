@@ -2,6 +2,7 @@ package grpc
 
 import (
 	"context"
+	"time"
 
 	bookstorepb "microservices/generated-go/bookstore"
 	"microservices/order-service-go/internal/service"
@@ -50,4 +51,34 @@ func (h *Handler) CreateOrder(ctx context.Context, req *bookstorepb.CreateOrderR
 		Status:     order.Status,
 		TotalCents: order.TotalCents,
 	}, nil
+}
+
+func (h *Handler) GetOrders(ctx context.Context, req *bookstorepb.GetOrdersRequest) (*bookstorepb.GetOrdersResponse, error) {
+	if req.GetUserId() == "" {
+		return nil, status.Error(codes.InvalidArgument, "user_id is required")
+	}
+
+	orders, err := h.service.GetOrders(ctx, req.GetUserId())
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	resp := &bookstorepb.GetOrdersResponse{Orders: make([]*bookstorepb.Order, 0, len(orders))}
+	for _, order := range orders {
+		createdAt := ""
+		if !order.CreatedAt.IsZero() {
+			createdAt = order.CreatedAt.UTC().Format(time.RFC3339Nano)
+		}
+		resp.Orders = append(resp.Orders, &bookstorepb.Order{
+			OrderId:    order.OrderID,
+			UserId:     order.UserID,
+			BookId:     order.BookID,
+			Quantity:   order.Quantity,
+			TotalCents: order.TotalCents,
+			Status:     order.Status,
+			CreatedAt:  createdAt,
+		})
+	}
+
+	return resp, nil
 }

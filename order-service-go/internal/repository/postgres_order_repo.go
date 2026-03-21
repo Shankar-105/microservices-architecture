@@ -64,3 +64,46 @@ func (r *PostgresOrderRepo) UpdateResult(ctx context.Context, orderID string, to
 	`, totalCents, status, orderID)
 	return err
 }
+
+func (r *PostgresOrderRepo) ListByUser(ctx context.Context, userID string) ([]Order, error) {
+	rows, err := r.db.QueryContext(ctx, `
+		SELECT order_id, user_id, book_id, quantity, total_cents, status, created_at
+		FROM orders
+		WHERE user_id = ?
+		ORDER BY created_at DESC
+	`, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	orders := make([]Order, 0)
+	for rows.Next() {
+		var order Order
+		var createdAt string
+		if err := rows.Scan(
+			&order.OrderID,
+			&order.UserID,
+			&order.BookID,
+			&order.Quantity,
+			&order.TotalCents,
+			&order.Status,
+			&createdAt,
+		); err != nil {
+			return nil, err
+		}
+
+		parsed, err := time.Parse(time.RFC3339Nano, createdAt)
+		if err == nil {
+			order.CreatedAt = parsed
+		}
+
+		orders = append(orders, order)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return orders, nil
+}
