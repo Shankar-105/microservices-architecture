@@ -7,6 +7,8 @@ from fastapi import FastAPI
 from app.config import settings
 from app.grpc_server import start_grpc_server
 from app.logging_config import configure_logging
+from app.repository.catalog_repo import CatalogRepository
+from app.service.catalog_service import CatalogService
 
 configure_logging()
 logger = logging.getLogger(__name__)
@@ -27,8 +29,10 @@ async def _serve_http() -> None:
 
 async def main() -> None:
     logger.info("starting catalog-service")
+    repo = CatalogRepository(settings.db_path)
+    service = CatalogService(repo)
     await asyncio.gather(
-        start_grpc_server(settings.grpc_port),
+        start_grpc_server(settings.grpc_port, service),
         _serve_http(),
     )
 

@@ -7,6 +7,8 @@ from fastapi import FastAPI
 from app.config import settings
 from app.grpc_server import start_grpc_server
 from app.logging_config import configure_logging
+from app.repository.payment_repo import PaymentRepository
+from app.service.payment_service import PaymentService
 
 configure_logging()
 logger = logging.getLogger(__name__)
@@ -27,8 +29,10 @@ async def _serve_http() -> None:
 
 async def main() -> None:
     logger.info("starting payment-service")
+    repo = PaymentRepository(settings.db_path)
+    service = PaymentService(repo)
     await asyncio.gather(
-        start_grpc_server(settings.grpc_port),
+        start_grpc_server(settings.grpc_port, service),
         _serve_http(),
     )
 

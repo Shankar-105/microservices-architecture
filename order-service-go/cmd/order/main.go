@@ -1,6 +1,8 @@
 package main
 
 import (
+	"context"
+	"database/sql"
 	"log"
 	"net"
 	"os"
@@ -8,17 +10,44 @@ import (
 	"syscall"
 	"time"
 
+	bookstorepb "github.com/shank/bookstore-microservices/generated-go/bookstore"
+	grpcadapter "github.com/shank/bookstore-microservices/order-service-go/internal/grpc"
+	"github.com/shank/bookstore-microservices/order-service-go/internal/repository"
+	"github.com/shank/bookstore-microservices/order-service-go/internal/service"
 	"google.golang.org/grpc"
+	_ "modernc.org/sqlite"
 )
 
 func main() {
+	ctx := context.Background()
 	port := getenv("ORDER_GRPC_PORT", "50052")
+	dbPath := getenv("ORDER_DB_PATH", "order-service.db")
+
+	db, err := sql.Open("sqlite", dbPath)
+	if err != nil {
+		log.Fatalf("db open failed: %v", err)
+	}
+	defer func() {
+		if closeErr := db.Close(); closeErr != nil {
+			log.Printf("db close error: %v", closeErr)
+		}
+	}()
+
+	repo := repository.NewPostgresOrderRepo(db)
+	if err := repo.Init(ctx); err != nil {
+		log.Fatalf("repo init failed: %v", err)
+	}
+
+	orderService := service.NewOrderService(repo)
+	handler := grpcadapter.NewHandler(orderService)
+
 	listener, err := net.Listen("tcp", ":"+port)
 	if err != nil {
 		log.Fatalf("listen failed: %v", err)
 	}
 
 	grpcServer := grpc.NewServer()
+	bookstorepb.RegisterOrderServiceServer(grpcServer, handler)
 
 	go func() {
 		log.Printf("order-service gRPC listening on :%s", port)

@@ -1,3 +1,12 @@
+from app.repository.catalog_repo import Book, CatalogRepository
+
+
 class CatalogService:
-    # Real business methods are added in Phase 2.
-    pass
+    def __init__(self, repo: CatalogRepository) -> None:
+        self._repo = repo
+
+    def health(self) -> str:
+        return "ok"
+
+    def get_book(self, book_id: str) -> Book | None:
+        return self._repo.get_book(book_id)

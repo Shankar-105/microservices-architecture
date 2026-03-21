@@ -5,3 +5,4 @@ scripts
 generated-go/
 generated-py/
 .venv
+pyrightconfig.json
