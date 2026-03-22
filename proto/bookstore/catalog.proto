@@ -9,6 +9,7 @@ import "bookstore/common.proto";
 service CatalogService {
   rpc Health(bookstore.common.v1.HealthCheckRequest) returns (bookstore.common.v1.HealthCheckResponse);
   rpc GetBook(GetBookRequest) returns (GetBookResponse);
+  rpc GetAllBooks(GetAllBooksRequest) returns (GetAllBooksResponse);
 }
 
 message GetBookRequest {
@@ -20,4 +21,17 @@ message GetBookResponse {
   string title = 2;
   int64 price_cents = 3;
   bool available = 4;
+}
+
+message GetAllBooksRequest {}
+
+message CatalogBook {
+  string book_id = 1;
+  string title = 2;
+  int64 price_cents = 3;
+  bool available = 4;
+}
+
+message GetAllBooksResponse {
+  repeated CatalogBook books = 1;
 }

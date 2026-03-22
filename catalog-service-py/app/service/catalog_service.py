@@ -10,3 +10,6 @@ class CatalogService:
 
     def get_book(self, book_id: str) -> Book | None:
         return self._repo.get_book(book_id)
+
+    def get_all_books(self) -> list[Book]:
+        return self._repo.list_books()

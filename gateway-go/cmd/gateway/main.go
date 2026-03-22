@@ -16,6 +16,7 @@ import (
 func main() {
 	port := getenv("GATEWAY_HTTP_PORT", "8080")
 	orderServiceAddr := getenv("ORDER_SERVICE_ADDR", "localhost:50052")
+	catalogServiceAddr := getenv("CATALOG_SERVICE_ADDR", "localhost:50053")
 
 	orderClient, err := clients.NewOrderClient(context.Background(), orderServiceAddr)
 	if err != nil {
@@ -27,9 +28,19 @@ func main() {
 		}
 	}()
 
+	catalogClient, err := clients.NewCatalogClient(context.Background(), catalogServiceAddr)
+	if err != nil {
+		log.Fatalf("catalog client init failed: %v", err)
+	}
+	defer func() {
+		if closeErr := catalogClient.Close(); closeErr != nil {
+			log.Printf("catalog client close error: %v", closeErr)
+		}
+	}()
+
 	srv := &http.Server{
 		Addr:              ":" + port,
-		Handler:           httptransport.NewRouter(orderClient),
+		Handler:           httptransport.NewRouter(orderClient, catalogClient),
 		ReadHeaderTimeout: 5 * time.Second,
 	}
 

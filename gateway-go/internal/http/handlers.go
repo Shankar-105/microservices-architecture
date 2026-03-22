@@ -14,11 +14,12 @@ import (
 )
 
 type Handler struct {
-	orderClient *clients.OrderClient
+	orderClient   *clients.OrderClient
+	catalogClient *clients.CatalogClient
 }
 
-func NewHandler(orderClient *clients.OrderClient) *Handler {
-	return &Handler{orderClient: orderClient}
+func NewHandler(orderClient *clients.OrderClient, catalogClient *clients.CatalogClient) *Handler {
+	return &Handler{orderClient: orderClient, catalogClient: catalogClient}
 }
 
 func (h *Handler) HealthHandler(w http.ResponseWriter, _ *http.Request) {
@@ -133,6 +134,42 @@ func (h *Handler) GetOrdersHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeJSON(w, http.StatusOK, map[string]any{"orders": orders})
+}
+
+func (h *Handler) GetAllBooksHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "method not allowed"})
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+	defer cancel()
+
+	grpcResp, err := h.catalogClient.GetAllBooks(ctx, &bookstorepb.GetAllBooksRequest{})
+	if err != nil {
+		code := http.StatusInternalServerError
+		message := "internal gateway error"
+
+		if s, ok := status.FromError(err); ok {
+			code = grpcCodeToHTTP(s.Code())
+			message = s.Message()
+		}
+
+		writeJSON(w, code, map[string]string{"error": message})
+		return
+	}
+
+	books := make([]map[string]any, 0, len(grpcResp.GetBooks()))
+	for _, book := range grpcResp.GetBooks() {
+		books = append(books, map[string]any{
+			"book_id":     book.GetBookId(),
+			"title":       book.GetTitle(),
+			"price_cents": book.GetPriceCents(),
+			"available":   book.GetAvailable(),
+		})
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{"books": books})
 }
 
 func grpcCodeToHTTP(code codes.Code) int {

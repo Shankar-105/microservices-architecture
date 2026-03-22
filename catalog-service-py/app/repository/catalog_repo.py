@@ -59,3 +59,19 @@ class CatalogRepository:
             price_cents=row[2],
             available=bool(row[3]),
         )
+
+    def list_books(self) -> list[Book]:
+        with self._connect() as conn:
+            rows = conn.execute(
+                "SELECT book_id, title, price_cents, available FROM books ORDER BY book_id",
+            ).fetchall()
+
+        return [
+            Book(
+                book_id=row[0],
+                title=row[1],
+                price_cents=row[2],
+                available=bool(row[3]),
+            )
+            for row in rows
+        ]

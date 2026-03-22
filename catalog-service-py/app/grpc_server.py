@@ -47,6 +47,20 @@ class CatalogGrpcServicer(catalog_pb2_grpc.CatalogServiceServicer):
             available=book.available,
         )
 
+    async def GetAllBooks(self, request, context):
+        books = self._service.get_all_books()
+        return catalog_pb2_any.GetAllBooksResponse(
+            books=[
+                catalog_pb2_any.CatalogBook(
+                    book_id=book.book_id,
+                    title=book.title,
+                    price_cents=book.price_cents,
+                    available=book.available,
+                )
+                for book in books
+            ]
+        )
+
 
 async def start_grpc_server(port: int, service: CatalogService) -> None:
     server = grpc.aio.server()
