@@ -1,23 +1,41 @@
-version: "3.9"
-
 services:
   gateway-go:
-    build: ./gateway-go
+    build:
+      context: .
+      dockerfile: gateway-go/Dockerfile
+    environment:
+      ORDER_SERVICE_ADDR: order-service-go:50052
+      CATALOG_SERVICE_ADDR: catalog-service-py:50053
+    depends_on:
+      - order-service-go
+      - catalog-service-py
     ports:
       - "8080:8080"
 
   user-service-go:
-    build: ./user-service-go
+    build:
+      context: .
+      dockerfile: user-service-go/Dockerfile
     ports:
       - "50051:50051"
 
   order-service-go:
-    build: ./order-service-go
+    build:
+      context: .
+      dockerfile: order-service-go/Dockerfile
+    environment:
+      USER_SERVICE_ADDR: user-service-go:50051
+      CATALOG_SERVICE_ADDR: catalog-service-py:50053
+    depends_on:
+      - user-service-go
+      - catalog-service-py
     ports:
       - "50052:50052"
 
   catalog-service-py:
-    build: ./catalog-service-py
+    build:
+      context: .
+      dockerfile: catalog-service-py/Dockerfile
     ports:
       - "50053:50053"
       - "8001:8001"
