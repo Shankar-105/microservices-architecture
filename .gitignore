@@ -1,6 +1,5 @@
 microservices-mastery/
 plan.md
-docs/
 scripts
 generated-go/
 generated-py/
@@ -9,3 +8,5 @@ pyrightconfig.json
 *.txt
 *.db
 **/go.sum
+phase1-deep-dive.md
+phase-02-deep-dive.md
