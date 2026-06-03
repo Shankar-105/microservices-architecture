@@ -114,15 +114,7 @@ func (h *Handler) CreateOrderHandler(w http.ResponseWriter, r *http.Request) {
 		Quantity: reqBody.Quantity,
 	})
 	if err != nil {
-		code := http.StatusInternalServerError
-		message := "internal gateway error"
-
-		if s, ok := status.FromError(err); ok {
-			code = grpcCodeToHTTP(s.Code())
-			message = s.Message()
-		}
-
-		writeJSON(w, code, map[string]string{"error": message})
+		writeGRPCError(w, err)
 		return
 	}
 
@@ -139,9 +131,9 @@ func (h *Handler) GetOrdersHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userID := r.URL.Query().Get("user_id")
-	if userID == "" {
-		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "user_id is required"})
+	userID := strings.TrimSpace(r.URL.Query().Get("user_id"))
+	if !validIdentifier(userID) {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "a valid user_id is required"})
 		return
 	}
 
@@ -150,18 +142,14 @@ func (h *Handler) GetOrdersHandler(w http.ResponseWriter, r *http.Request) {
 
 	grpcResp, err := h.orderClient.GetOrders(ctx, &bookstorepb.GetOrdersRequest{UserId: userID})
 	if err != nil {
-		code := http.StatusInternalServerError
-		message := "internal gateway error"
-
-		if s, ok := status.FromError(err); ok {
-			code = grpcCodeToHTTP(s.Code())
-			message = s.Message()
-		}
-
-		writeJSON(w, code, map[string]string{"error": message})
+		writeGRPCError(w, err)
 		return
 	}
 
+	if grpcResp == nil {
+		writeJSON(w, http.StatusBadGateway, map[string]string{"error": "order service returned an empty response"})
+		return
+	}
 	orders := make([]map[string]any, 0, len(grpcResp.GetOrders()))
 	for _, order := range grpcResp.GetOrders() {
 		orders = append(orders, map[string]any{
@@ -189,18 +177,14 @@ func (h *Handler) GetAllBooksHandler(w http.ResponseWriter, r *http.Request) {
 
 	grpcResp, err := h.catalogClient.GetAllBooks(ctx, &bookstorepb.GetAllBooksRequest{})
 	if err != nil {
-		code := http.StatusInternalServerError
-		message := "internal gateway error"
-
-		if s, ok := status.FromError(err); ok {
-			code = grpcCodeToHTTP(s.Code())
-			message = s.Message()
-		}
-
-		writeJSON(w, code, map[string]string{"error": message})
+		writeGRPCError(w, err)
 		return
 	}
 
+	if grpcResp == nil {
+		writeJSON(w, http.StatusBadGateway, map[string]string{"error": "catalog service returned an empty response"})
+		return
+	}
 	books := make([]map[string]any, 0, len(grpcResp.GetBooks()))
 	for _, book := range grpcResp.GetBooks() {
 		books = append(books, map[string]any{
