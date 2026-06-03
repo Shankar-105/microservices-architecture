@@ -3,7 +3,9 @@ package http
 import (
 	"context"
 	"encoding/json"
+	"io"
 	"net/http"
+	"strings"
 	"time"
 
 	"microservices/gateway-go/internal/clients"
@@ -46,6 +48,44 @@ type createOrderHTTPRequest struct {
 	Quantity int32  `json:"quantity"`
 }
 
+const (
+	maxRequestBodyBytes = 1 << 20
+	maxIdentifierBytes  = 128
+	maxOrderQuantity    = int32(10000)
+)
+
+func decodeJSONBody(w http.ResponseWriter, r *http.Request, dst any) bool {
+	r.Body = http.MaxBytesReader(w, r.Body, maxRequestBodyBytes)
+	decoder := json.NewDecoder(r.Body)
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(dst); err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid JSON payload"})
+		return false
+	}
+
+	var extra any
+	if err := decoder.Decode(&extra); err != io.EOF {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "request body must contain one JSON object"})
+		return false
+	}
+	return true
+}
+
+func validIdentifier(value string) bool {
+	value = strings.TrimSpace(value)
+	return value != "" && len(value) <= maxIdentifierBytes
+}
+
+func writeGRPCError(w http.ResponseWriter, err error) {
+	code := http.StatusInternalServerError
+	message := "internal gateway error"
+	if s, ok := status.FromError(err); ok {
+		code = grpcCodeToHTTP(s.Code())
+		message = s.Message()
+	}
+	writeJSON(w, code, map[string]string{"error": message})
+}
+
 func (h *Handler) CreateOrderHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "method not allowed"})
@@ -53,13 +93,15 @@ func (h *Handler) CreateOrderHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var reqBody createOrderHTTPRequest
-	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
-		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid JSON payload"})
+	if !decodeJSONBody(w, r, &reqBody) {
 		return
 	}
 
-	if reqBody.UserID == "" || reqBody.BookID == "" || reqBody.Quantity <= 0 {
-		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "user_id, book_id and positive quantity are required"})
+	reqBody.UserID = strings.TrimSpace(reqBody.UserID)
+	reqBody.BookID = strings.TrimSpace(reqBody.BookID)
+	if !validIdentifier(reqBody.UserID) || !validIdentifier(reqBody.BookID) ||
+		reqBody.Quantity <= 0 || reqBody.Quantity > maxOrderQuantity {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "valid user_id, book_id and quantity from 1 to 10000 are required"})
 		return
 	}
 
