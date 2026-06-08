@@ -15,5 +15,5 @@ func NewRouter(orderClient *clients.OrderClient, catalogClient *clients.CatalogC
 	mux.HandleFunc("/getorders", handler.GetOrdersHandler)
 	mux.HandleFunc("/getallbooks", handler.GetAllBooksHandler)
 
-	return middleware.RequestID(mux)
+	return middleware.Recovery(middleware.RequestID(mux))
 }
