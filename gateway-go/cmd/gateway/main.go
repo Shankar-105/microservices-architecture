@@ -42,6 +42,10 @@ func main() {
 		Addr:              ":" + port,
 		Handler:           httptransport.NewRouter(orderClient, catalogClient),
 		ReadHeaderTimeout: 5 * time.Second,
+		ReadTimeout:       10 * time.Second,
+		WriteTimeout:      15 * time.Second,
+		IdleTimeout:       60 * time.Second,
+		MaxHeaderBytes:    16 << 10,
 	}
 
 	go func() {
