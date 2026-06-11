@@ -2,6 +2,7 @@ package grpc
 
 import (
 	"context"
+	"strings"
 	"time"
 
 	bookstorepb "microservices/generated-go/bookstore"
@@ -25,15 +26,27 @@ func (h *Handler) Health(_ context.Context, _ *bookstorepb.HealthCheckRequest) (
 }
 
 func (h *Handler) CreateOrder(ctx context.Context, req *bookstorepb.CreateOrderRequest) (*bookstorepb.CreateOrderResponse, error) {
-	if req.GetUserId() == "" || req.GetBookId() == "" {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "create order request is required")
+	}
+
+	userID := strings.TrimSpace(req.GetUserId())
+	bookID := strings.TrimSpace(req.GetBookId())
+	if userID == "" || bookID == "" {
 		return nil, status.Error(codes.InvalidArgument, "user_id and book_id are required")
 	}
 
 	if req.GetQuantity() <= 0 {
 		return nil, status.Error(codes.InvalidArgument, "quantity must be greater than zero")
 	}
+	if req.GetQuantity() > 10000 {
+		return nil, status.Error(codes.InvalidArgument, "quantity must not exceed 10000")
+	}
+	if len(userID) > 128 || len(bookID) > 128 {
+		return nil, status.Error(codes.InvalidArgument, "user_id and book_id must not exceed 128 characters")
+	}
 
-	order, err := h.service.CreateOrder(ctx, req.GetUserId(), req.GetBookId(), req.GetQuantity())
+	order, err := h.service.CreateOrder(ctx, userID, bookID, req.GetQuantity())
 	if err != nil {
 		switch err {
 		case service.ErrUserNotFound, service.ErrBookNotFound:
@@ -54,11 +67,18 @@ func (h *Handler) CreateOrder(ctx context.Context, req *bookstorepb.CreateOrderR
 }
 
 func (h *Handler) GetOrders(ctx context.Context, req *bookstorepb.GetOrdersRequest) (*bookstorepb.GetOrdersResponse, error) {
-	if req.GetUserId() == "" {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "get orders request is required")
+	}
+	userID := strings.TrimSpace(req.GetUserId())
+	if userID == "" {
 		return nil, status.Error(codes.InvalidArgument, "user_id is required")
 	}
+	if len(userID) > 128 {
+		return nil, status.Error(codes.InvalidArgument, "user_id must not exceed 128 characters")
+	}
 
-	orders, err := h.service.GetOrders(ctx, req.GetUserId())
+	orders, err := h.service.GetOrders(ctx, userID)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
