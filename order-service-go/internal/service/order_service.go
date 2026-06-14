@@ -39,6 +39,16 @@ func NewOrderService(
 }
 
 func (s *OrderService) CreateOrder(ctx context.Context, userID, bookID string, quantity int32) (*repository.Order, error) {
+	if ctx == nil {
+		return nil, errors.New("context is required")
+	}
+	if userID == "" || bookID == "" {
+		return nil, errors.New("user_id and book_id are required")
+	}
+	if quantity <= 0 || quantity > 10000 {
+		return nil, errors.New("quantity is outside the allowed range")
+	}
+
 	if _, err := s.userClient.GetUser(ctx, userID); err != nil {
 		if grpcStatus, ok := status.FromError(err); ok && grpcStatus.Code() == codes.NotFound {
 			return nil, ErrUserNotFound
@@ -58,7 +68,14 @@ func (s *OrderService) CreateOrder(ctx context.Context, userID, bookID string, q
 		return nil, ErrBookUnavailable
 	}
 
-	totalCents := bookResp.GetPriceCents() * int64(quantity)
+	priceCents := bookResp.GetPriceCents()
+	if priceCents < 0 {
+		return nil, errors.New("catalog returned invalid price")
+	}
+	if priceCents != 0 && int64(quantity) > (int64(^uint64(0)>>1)/priceCents) {
+		return nil, errors.New("order total exceeds supported range")
+	}
+	totalCents := priceCents * int64(quantity)
 
 	order := &repository.Order{
 		OrderID:    fmt.Sprintf("ord-%d", time.Now().UnixNano()),
