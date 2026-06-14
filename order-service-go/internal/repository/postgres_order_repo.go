@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"time"
 )
 
@@ -40,6 +41,21 @@ func (r *PostgresOrderRepo) Init(ctx context.Context) error {
 }
 
 func (r *PostgresOrderRepo) Create(ctx context.Context, order *Order) error {
+	if r == nil || r.db == nil {
+		return errors.New("order repository is not initialized")
+	}
+	if ctx == nil {
+		return errors.New("context is required")
+	}
+	if order == nil {
+		return errors.New("order is required")
+	}
+	if order.OrderID == "" || order.UserID == "" || order.BookID == "" {
+		return errors.New("order identifiers are required")
+	}
+	if order.Quantity <= 0 || order.TotalCents < 0 {
+		return errors.New("order amounts are invalid")
+	}
 	order.CreatedAt = time.Now().UTC()
 	_, err := r.db.ExecContext(ctx, `
 		INSERT INTO orders (order_id, user_id, book_id, quantity, total_cents, status, created_at)
