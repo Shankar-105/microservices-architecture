@@ -12,11 +12,15 @@ class Book:
 
 class CatalogRepository:
     def __init__(self, db_path: str) -> None:
+        if not db_path or "\x00" in db_path:
+            raise ValueError("database path must be a valid non-empty string")
         self._db_path = db_path
         self._init_db()
 
     def _connect(self) -> sqlite3.Connection:
-        return sqlite3.connect(self._db_path)
+        conn = sqlite3.connect(self._db_path, timeout=5.0)
+        conn.execute("PRAGMA busy_timeout = 5000")
+        return conn
 
     def _init_db(self) -> None:
         with self._connect() as conn:
@@ -44,6 +48,11 @@ class CatalogRepository:
             conn.commit()
 
     def get_book(self, book_id: str) -> Book | None:
+        if not isinstance(book_id, str) or not book_id.strip():
+            return None
+        book_id = book_id.strip()
+        if len(book_id) > 128:
+            return None
         with self._connect() as conn:
             row = conn.execute(
                 "SELECT book_id, title, price_cents, available FROM books WHERE book_id = ?",
