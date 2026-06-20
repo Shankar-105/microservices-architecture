@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import sys
+import time
 from pathlib import Path
 from typing import Any, cast
 
@@ -26,7 +27,11 @@ class CatalogGrpcServicer(catalog_pb2_grpc.CatalogServiceServicer):
         self._service = service
 
     async def Health(self, request, context):
-        return common_pb2_any.HealthCheckResponse(status=self._service.health(), service="catalog-service-py")
+        return common_pb2_any.HealthCheckResponse(
+            status=self._service.health(),
+            service="catalog-service-py",
+            unix_time=int(time.time()),
+        )
 
     async def GetBook(self, request, context):
         book_id = request.book_id.strip() if isinstance(request.book_id, str) else ""
@@ -43,7 +48,13 @@ class CatalogGrpcServicer(catalog_pb2_grpc.CatalogServiceServicer):
             context.set_details("book_id contains unsupported control characters")
             return catalog_pb2_any.GetBookResponse()
 
-        book = self._service.get_book(book_id)
+        try:
+            book = self._service.get_book(book_id)
+        except Exception:
+            logger.exception("catalog repository failed while looking up book %s", book_id)
+            context.set_code(grpc.StatusCode.INTERNAL)
+            context.set_details("catalog repository unavailable")
+            return catalog_pb2_any.GetBookResponse()
         if book is None:
             context.set_code(grpc.StatusCode.NOT_FOUND)
             context.set_details("book not found")
@@ -57,7 +68,13 @@ class CatalogGrpcServicer(catalog_pb2_grpc.CatalogServiceServicer):
         )
 
     async def GetAllBooks(self, request, context):
-        books = self._service.get_all_books()
+        try:
+            books = self._service.get_all_books()
+        except Exception:
+            logger.exception("catalog repository failed while listing books")
+            context.set_code(grpc.StatusCode.INTERNAL)
+            context.set_details("catalog repository unavailable")
+            return catalog_pb2_any.GetAllBooksResponse()
         return catalog_pb2_any.GetAllBooksResponse(
             books=[
                 catalog_pb2_any.CatalogBook(
