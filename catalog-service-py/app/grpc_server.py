@@ -29,12 +29,21 @@ class CatalogGrpcServicer(catalog_pb2_grpc.CatalogServiceServicer):
         return common_pb2_any.HealthCheckResponse(status=self._service.health(), service="catalog-service-py")
 
     async def GetBook(self, request, context):
-        if not request.book_id:
+        book_id = request.book_id.strip() if isinstance(request.book_id, str) else ""
+        if not book_id:
             context.set_code(grpc.StatusCode.INVALID_ARGUMENT)
             context.set_details("book_id is required")
             return catalog_pb2_any.GetBookResponse()
+        if len(book_id) > 128:
+            context.set_code(grpc.StatusCode.INVALID_ARGUMENT)
+            context.set_details("book_id must not exceed 128 characters")
+            return catalog_pb2_any.GetBookResponse()
+        if any(ord(character) < 32 for character in book_id):
+            context.set_code(grpc.StatusCode.INVALID_ARGUMENT)
+            context.set_details("book_id contains unsupported control characters")
+            return catalog_pb2_any.GetBookResponse()
 
-        book = self._service.get_book(request.book_id)
+        book = self._service.get_book(book_id)
         if book is None:
             context.set_code(grpc.StatusCode.NOT_FOUND)
             context.set_details("book not found")
