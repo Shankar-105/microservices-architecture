@@ -21,6 +21,20 @@ async def healthz() -> dict[str, str]:
     return {"service": "catalog-service", "status": "ok"}
 
 
+@app.get("/readyz")
+async def readyz() -> dict[str, str]:
+    return {"service": "catalog-service", "status": "ready"}
+
+
+@app.middleware("http")
+async def security_headers(request, call_next):
+    response = await call_next(request)
+    response.headers["Cache-Control"] = "no-store"
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["Content-Security-Policy"] = "default-src 'none'"
+    return response
+
+
 async def _serve_http() -> None:
     config = uvicorn.Config(app=app, host="0.0.0.0", port=settings.http_port, log_level="info")
     server = uvicorn.Server(config)
