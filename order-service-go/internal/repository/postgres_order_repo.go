@@ -73,12 +73,34 @@ func (r *PostgresOrderRepo) Create(ctx context.Context, order *Order) error {
 }
 
 func (r *PostgresOrderRepo) UpdateResult(ctx context.Context, orderID string, totalCents int64, status string) error {
-	_, err := r.db.ExecContext(ctx, `
+	if ctx == nil {
+		return errors.New("context is required")
+	}
+	if orderID == "" {
+		return errors.New("order_id is required")
+	}
+	if totalCents < 0 {
+		return errors.New("total_cents must not be negative")
+	}
+	if status != "pending" && status != "confirmed" && status != "failed" {
+		return errors.New("unsupported order status")
+	}
+	result, err := r.db.ExecContext(ctx, `
 		UPDATE orders
 		SET total_cents = ?, status = ?
 		WHERE order_id = ?
 	`, totalCents, status, orderID)
-	return err
+	if err != nil {
+		return err
+	}
+	affected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if affected == 0 {
+		return errors.New("order not found")
+	}
+	return nil
 }
 
 func (r *PostgresOrderRepo) ListByUser(ctx context.Context, userID string) ([]Order, error) {
