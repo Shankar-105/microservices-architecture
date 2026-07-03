@@ -26,6 +26,12 @@ func NewPostgresOrderRepo(db *sql.DB) *PostgresOrderRepo {
 }
 
 func (r *PostgresOrderRepo) Init(ctx context.Context) error {
+	if ctx == nil {
+		return errors.New("context is required")
+	}
+	if r == nil || r.db == nil {
+		return errors.New("order repository is not initialized")
+	}
 	_, err := r.db.ExecContext(ctx, `
 		CREATE TABLE IF NOT EXISTS orders (
 			order_id TEXT PRIMARY KEY,
@@ -36,6 +42,13 @@ func (r *PostgresOrderRepo) Init(ctx context.Context) error {
 			status TEXT NOT NULL,
 			created_at TEXT NOT NULL
 		)
+	`)
+	if err != nil {
+		return err
+	}
+	_, err = r.db.ExecContext(ctx, `
+		CREATE INDEX IF NOT EXISTS idx_orders_user_created
+		ON orders (user_id, created_at DESC)
 	`)
 	return err
 }
