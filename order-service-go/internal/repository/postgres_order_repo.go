@@ -104,11 +104,21 @@ func (r *PostgresOrderRepo) UpdateResult(ctx context.Context, orderID string, to
 }
 
 func (r *PostgresOrderRepo) ListByUser(ctx context.Context, userID string) ([]Order, error) {
+	if ctx == nil {
+		return nil, errors.New("context is required")
+	}
+	if r == nil || r.db == nil {
+		return nil, errors.New("order repository is not initialized")
+	}
+	if userID == "" {
+		return nil, errors.New("user_id is required")
+	}
 	rows, err := r.db.QueryContext(ctx, `
 		SELECT order_id, user_id, book_id, quantity, total_cents, status, created_at
 		FROM orders
 		WHERE user_id = ?
 		ORDER BY created_at DESC
+		LIMIT 500
 	`, userID)
 	if err != nil {
 		return nil, err
