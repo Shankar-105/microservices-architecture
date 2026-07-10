@@ -3,6 +3,7 @@ package grpc
 import (
 	"context"
 	"strings"
+	"time"
 
 	bookstorepb "microservices/generated-go/bookstore"
 	"microservices/user-service-go/internal/service"
@@ -21,7 +22,11 @@ func NewHandler(svc *service.UserService) *Handler {
 }
 
 func (h *Handler) Health(_ context.Context, _ *bookstorepb.HealthCheckRequest) (*bookstorepb.HealthCheckResponse, error) {
-	return &bookstorepb.HealthCheckResponse{Status: "ok", Service: "user-service-go"}, nil
+	return &bookstorepb.HealthCheckResponse{
+		Status:   "ok",
+		Service:  "user-service-go",
+		UnixTime: time.Now().Unix(),
+	}, nil
 }
 
 func (h *Handler) GetUser(ctx context.Context, req *bookstorepb.GetUserRequest) (*bookstorepb.GetUserResponse, error) {
