@@ -22,7 +22,11 @@ func NewHandler(svc *service.OrderService) *Handler {
 }
 
 func (h *Handler) Health(_ context.Context, _ *bookstorepb.HealthCheckRequest) (*bookstorepb.HealthCheckResponse, error) {
-	return &bookstorepb.HealthCheckResponse{Status: "ok", Service: "order-service-go"}, nil
+	return &bookstorepb.HealthCheckResponse{
+		Status:   "ok",
+		Service:  "order-service-go",
+		UnixTime: time.Now().Unix(),
+	}, nil
 }
 
 func (h *Handler) CreateOrder(ctx context.Context, req *bookstorepb.CreateOrderRequest) (*bookstorepb.CreateOrderResponse, error) {
