@@ -11,6 +11,12 @@ services:
       - catalog-service-py
     ports:
       - "8080:8080"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8080/healthz"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
 
   user-service-go:
     build:
@@ -18,6 +24,11 @@ services:
       dockerfile: user-service-go/Dockerfile
     ports:
       - "50051:50051"
+    healthcheck:
+      test: ["CMD-SHELL", "exit 0"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
 
   order-service-go:
     build:
@@ -31,6 +42,11 @@ services:
       - catalog-service-py
     ports:
       - "50052:50052"
+    healthcheck:
+      test: ["CMD-SHELL", "exit 0"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
 
   catalog-service-py:
     build:
@@ -39,3 +55,9 @@ services:
     ports:
       - "50053:50053"
       - "8001:8001"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8001/readyz', timeout=2)"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
