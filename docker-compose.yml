@@ -7,8 +7,11 @@ services:
       ORDER_SERVICE_ADDR: order-service-go:50052
       CATALOG_SERVICE_ADDR: catalog-service-py:50053
     depends_on:
-      - order-service-go
-      - catalog-service-py
+      order-service-go:
+        condition: service_started
+      catalog-service-py:
+        condition: service_healthy
+    restart: unless-stopped
     ports:
       - "8080:8080"
     healthcheck:
@@ -24,6 +27,7 @@ services:
       dockerfile: user-service-go/Dockerfile
     ports:
       - "50051:50051"
+    restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "exit 0"]
       interval: 30s
@@ -38,10 +42,13 @@ services:
       USER_SERVICE_ADDR: user-service-go:50051
       CATALOG_SERVICE_ADDR: catalog-service-py:50053
     depends_on:
-      - user-service-go
-      - catalog-service-py
+      user-service-go:
+        condition: service_started
+      catalog-service-py:
+        condition: service_healthy
     ports:
       - "50052:50052"
+    restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "exit 0"]
       interval: 30s
@@ -55,6 +62,7 @@ services:
     ports:
       - "50053:50053"
       - "8001:8001"
+    restart: unless-stopped
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8001/readyz', timeout=2)"]
       interval: 10s
