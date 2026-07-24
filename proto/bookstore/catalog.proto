@@ -8,7 +8,9 @@ import "bookstore/common.proto";
 
 service CatalogService {
   rpc Health(bookstore.common.v1.HealthCheckRequest) returns (bookstore.common.v1.HealthCheckResponse);
+  // Looks up one catalog item and reports unavailable or not-found states.
   rpc GetBook(GetBookRequest) returns (GetBookResponse);
+  // Returns catalog items in stable book identifier order.
   rpc GetAllBooks(GetAllBooksRequest) returns (GetAllBooksResponse);
 }
 

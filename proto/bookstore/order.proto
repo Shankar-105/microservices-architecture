@@ -8,13 +8,18 @@ import "bookstore/common.proto";
 
 service OrderService {
   rpc Health(bookstore.common.v1.HealthCheckRequest) returns (bookstore.common.v1.HealthCheckResponse);
+  // Creates a pending order, verifies dependencies, and persists confirmation.
   rpc CreateOrder(CreateOrderRequest) returns (CreateOrderResponse);
+  // Lists at most the most recent 500 persisted orders for a user.
   rpc GetOrders(GetOrdersRequest) returns (GetOrdersResponse);
 }
 
 message CreateOrderRequest {
+  // Stable user identifier; 1-128 visible characters.
   string user_id = 1;
+  // Stable catalog identifier; 1-128 visible characters.
   string book_id = 2;
+  // Requested units; accepted range is 1 through 10000.
   int32 quantity = 3;
 }
 
