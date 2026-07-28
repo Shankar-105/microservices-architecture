@@ -90,3 +90,24 @@ Gateway base URL for local run: `http://localhost:8080`
 2. Order service owns order records.
 3. Catalog service owns book records.
 4. User service owns user validation data.
+
+## Defensive Request Behavior
+1. Gateway JSON bodies are limited to 1 MiB and unknown fields are rejected.
+2. An order body must contain exactly one JSON object.
+3. User and book identifiers are trimmed and limited to 128 characters.
+4. Order quantities must be between 1 and 10000.
+5. The gateway applies a five-second deadline to downstream gRPC calls.
+6. Catalog and order lookups translate gRPC status codes into HTTP status codes.
+7. NOT_FOUND responses become HTTP 404 and unavailable dependencies become HTTP 503.
+8. Invalid arguments become HTTP 400 and failed preconditions become HTTP 409.
+9. Every gateway response includes an `X-Request-ID` header for tracing.
+10. The recovery middleware converts unexpected panics into JSON HTTP 500 responses.
+
+## Failure Scenarios
+1. An unavailable user service produces a dependency failure rather than a created order.
+2. An unknown user or book is reported without writing an order.
+3. An unavailable catalog book fails before repository insertion.
+4. Integer overflow is checked before computing an order total.
+5. Order history is capped at 500 records to limit response and memory growth.
+6. Repository state and database contexts are checked before data operations.
+7. Catalog repository exceptions are isolated from the network response boundary.
