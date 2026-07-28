@@ -8,10 +8,12 @@ import "bookstore/common.proto";
 
 service UserService {
   rpc Health(bookstore.common.v1.HealthCheckRequest) returns (bookstore.common.v1.HealthCheckResponse);
+  // Resolves a stable user identifier or returns NOT_FOUND.
   rpc GetUser(GetUserRequest) returns (GetUserResponse);
 }
 
 message GetUserRequest {
+  // Stable user identifier; 1-128 visible characters.
   string user_id = 1;
 }
 

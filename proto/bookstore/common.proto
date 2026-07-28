@@ -5,11 +5,15 @@ package bookstore.common.v1;
 option go_package = "microservices/generated-go/bookstore;bookstorepb";
 
 message HealthCheckRequest {
+  // Optional caller-provided service name for diagnostic routing.
   string service = 1;
 }
 
 message HealthCheckResponse {
+  // Health state; normally \"ok\" while the process is serving.
   string status = 1;
+  // Canonical implementation name for this service.
   string service = 2;
+  // Unix timestamp in seconds at response construction.
   int64 unix_time = 3;
 }
