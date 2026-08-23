@@ -136,3 +136,21 @@ docker system prune
 ```
 
 Use this carefully because it removes unused resources across Docker on your machine.
+
+## Compose Health and Startup Checks
+1. Gateway reports HTTP health after its listener is available.
+2. Catalog reports both `/healthz` and `/readyz`; Compose watches the ready endpoint.
+3. Order and user containers use lightweight process health checks.
+4. Compose restart policies restart stopped containers unless explicitly stopped.
+5. The gateway waits for order startup and catalog readiness before dependency startup.
+6. The order service waits for user startup and catalog readiness before dependency startup.
+7. Use `docker compose ps` to confirm health status rather than only listening ports.
+
+## Container Troubleshooting
+1. If the gateway returns 503, verify catalog and order container health in Compose.
+2. If catalog readiness fails, inspect `docker compose logs catalog-service-py`.
+3. If order creation fails, inspect catalog and user logs for the dependent gRPC call.
+4. Invalid JSON, unknown fields, oversized bodies, and invalid identifiers return HTTP 400.
+5. Rebuild the affected image after source or Dockerfile changes.
+6. Remove stopped containers with `docker compose down` before a clean rebuild.
+7. Persisted SQLite data is container-local unless explicitly mounted for a named volume.
