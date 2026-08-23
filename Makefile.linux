@@ -13,7 +13,7 @@ PROTO_FILES := \
 	$(PROTO_DIR)/catalog.proto \
 	$(PROTO_DIR)/order.proto
 
-.PHONY: help init-py install-py-deps check-protoc install-go-plugins check-go-plugins proto-dirs proto-go proto-py proto run-gateway run-user run-order run-catalog run-all stop-all status-ports
+.PHONY: help init-py install-py-deps check-protoc install-go-plugins check-go-plugins proto-dirs proto-go proto-py proto test-go test-py test run-gateway run-user run-order run-catalog run-all stop-all status-ports
 
 help:
 	@echo "Targets:" \
@@ -21,6 +21,9 @@ help:
 	&& echo "  install-py-deps  Install catalog Python requirements" \
 	&& echo "  install-go-plugins Install protoc Go plugins" \
 	&& echo "  proto            Generate Go + Python protobuf stubs" \
+	&& echo "  test-go          Run Go unit tests in gateway, order, and user modules" \
+	&& echo "  test-py          Run Python catalog unit tests" \
+	&& echo "  test             Run both Go and Python test suites" \
 	&& echo "  run-all          Start all services in background" \
 	&& echo "  stop-all         Stop all services by known ports" \
 	&& echo "  status-ports     Show listeners for service ports"
@@ -60,6 +63,16 @@ proto-py: install-py-deps proto-dirs
 		$(PROTO_FILES)
 
 proto: proto-go proto-py
+
+test-go:
+	cd gateway-go && go test ./...
+	cd ../order-service-go && go test ./...
+	cd ../user-service-go && go test ./...
+
+test-py:
+	$(PROTO_PYTHON) -m pytest -q catalog-service-py/tests
+
+test: test-go test-py
 
 run-gateway:
 	cd gateway-go && go run ./cmd/gateway

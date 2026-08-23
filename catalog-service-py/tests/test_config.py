@@ -19,6 +19,10 @@ def test_positive_port_accepts_boundary_values(monkeypatch):
 
 @pytest.mark.parametrize("value", ["", "   ", "bad\x00path"])
 def test_required_db_path_rejects_invalid_values(monkeypatch, value):
+    if "\x00" in value:
+        with pytest.raises(RuntimeError):
+            required_db_path("TEST_DB_PATH", value)
+        return
     monkeypatch.setenv("TEST_DB_PATH", value)
     with pytest.raises(RuntimeError):
         required_db_path("TEST_DB_PATH", "catalog.db")

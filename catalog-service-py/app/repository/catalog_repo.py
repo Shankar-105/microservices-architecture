@@ -1,5 +1,6 @@
 import sqlite3
 from dataclasses import dataclass
+from contextlib import closing
 
 
 @dataclass
@@ -23,7 +24,8 @@ class CatalogRepository:
         return conn
 
     def _init_db(self) -> None:
-        with self._connect() as conn:
+        with closing(self._connect()) as conn:
+            conn.execute("PRAGMA foreign_keys = ON")
             conn.execute(
                 """
                 CREATE TABLE IF NOT EXISTS books (
@@ -53,7 +55,7 @@ class CatalogRepository:
         book_id = book_id.strip()
         if len(book_id) > 128:
             return None
-        with self._connect() as conn:
+        with closing(self._connect()) as conn:
             row = conn.execute(
                 "SELECT book_id, title, price_cents, available FROM books WHERE book_id = ?",
                 (book_id,),
@@ -70,7 +72,7 @@ class CatalogRepository:
         )
 
     def list_books(self) -> list[Book]:
-        with self._connect() as conn:
+        with closing(self._connect()) as conn:
             rows = conn.execute(
                 "SELECT book_id, title, price_cents, available FROM books ORDER BY book_id",
             ).fetchall()
