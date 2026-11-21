@@ -11,3 +11,4 @@ phase1-deep-dive.md
 phase-02-deep-dive.md
 __pycache__/
 *.pyc
+docs/docker-internals.md
